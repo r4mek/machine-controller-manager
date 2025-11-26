@@ -354,7 +354,6 @@ func (dc *controller) taintNodesBackingMachineSets(ctx context.Context, MachineS
 				msCopy.Annotations = make(map[string]string, 0)
 			}
 			msCopy.Annotations[taint.Key] = "True"
-
 			_, err = dc.controlMachineClient.MachineSets(msCopy.Namespace).Update(ctx, msCopy, metav1.UpdateOptions{})
 			if err != nil && time.Now().Before(retryDeadline) {
 				klog.Warningf("Unable to update MachineSet object %s, Error: %+v", machineSet.Name, err)
@@ -365,6 +364,7 @@ func (dc *controller) taintNodesBackingMachineSets(ctx context.Context, MachineS
 				klog.Errorf("Timeout occurred: Unable to update MachineSet object %s, Error: %+v", machineSet.Name, err)
 				return err
 			}
+			klog.V(3).Infof("kelly %s", msCopy.Name)
 
 			// Break out of loop when update succeeds
 			break

@@ -110,6 +110,7 @@ func (c *controller) unfreezeMachineDeploymentsWithUnfreezeAnnotation(ctx contex
 						klog.Errorf("SafetyController: MachineSet %s UPDATE failed. Error: %s", machineSet.Name, err)
 						return err
 					}
+					klog.V(3).Infof("kelly %s", clone.Name)
 				}
 			}
 		}
@@ -318,6 +319,7 @@ func (c *controller) freezeMachineSetAndDeployment(ctx context.Context, machineS
 		klog.Errorf("SafetyController: MachineSet/status UPDATE failed. Error: %s", err)
 		return err
 	}
+	klog.V(3).Infof("kelly1 %s", clone.Name)
 
 	clone = machineSet.DeepCopy()
 	if clone.Labels == nil {
@@ -329,6 +331,7 @@ func (c *controller) freezeMachineSetAndDeployment(ctx context.Context, machineS
 		klog.Errorf("SafetyController: MachineSet UPDATE failed. Error: %s", err)
 		return err
 	}
+	klog.V(3).Infof("kelly2 %s", clone.Name)
 
 	machineDeployments := c.getMachineDeploymentsForMachineSet(machineSet)
 	if len(machineDeployments) >= 1 {
@@ -394,6 +397,7 @@ func (c *controller) unfreezeMachineSet(ctx context.Context, machineSet *v1alpha
 		klog.Errorf("SafetyController: MachineSet/status UPDATE failed. Error: %s", err)
 		return err
 	}
+	klog.V(3).Infof("kelly %s", clone.Name)
 
 	clone = machineSet.DeepCopy()
 	if clone.Annotations == nil {
@@ -409,6 +413,7 @@ func (c *controller) unfreezeMachineSet(ctx context.Context, machineSet *v1alpha
 		klog.Errorf("SafetyController: MachineSet UPDATE failed. Error: %s", err)
 		return err
 	}
+	klog.V(3).Infof("kelly %s", clone.Name)
 
 	c.recorder.Eventf(machineSet, corev1.EventTypeNormal, MachineSetUnfreezeEvent, "SafetyController: Unfroze MachineSet %s", machineSet.Name)
 	klog.V(2).Infof("SafetyController: Unfroze MachineSet %q", machineSet.Name)
@@ -434,6 +439,7 @@ func (c *controller) freezeMachineDeployment(ctx context.Context, machineDeploym
 		klog.Errorf("SafetyController: MachineDeployment/status UPDATE failed. Error: %s", err)
 		return err
 	}
+	klog.V(3).Infof("tanaka %s", clone.Name)
 
 	clone = machineDeployment.DeepCopy()
 	if clone.Labels == nil {
@@ -445,6 +451,7 @@ func (c *controller) freezeMachineDeployment(ctx context.Context, machineDeploym
 		klog.Errorf("SafetyController: MachineDeployment UPDATE failed. Error: %s", err)
 		return err
 	}
+	klog.V(3).Infof("tanaka %s", clone.Name)
 
 	klog.V(2).Infof("SafetyController: Froze MachineDeployment %q due to %s", machineDeployment.Name, reason)
 	return nil
@@ -476,6 +483,7 @@ func (c *controller) unfreezeMachineDeployment(ctx context.Context, machineDeplo
 		klog.Errorf("SafetyController: MachineDeployment/status UPDATE failed. Error: %s", err)
 		return err
 	}
+	klog.V(3).Infof("tanaka %s", clone.Name)
 
 	clone = machineDeployment.DeepCopy()
 	if clone.Annotations == nil {
@@ -491,6 +499,7 @@ func (c *controller) unfreezeMachineDeployment(ctx context.Context, machineDeplo
 		klog.Errorf("SafetyController: MachineDeployment UPDATE failed. Error: %s", err)
 		return err
 	}
+	klog.V(3).Infof("tanaka %s", clone.Name)
 
 	klog.V(2).Infof("SafetyController: Unfroze MachineDeployment %q due to %s", machineDeployment.Name, reason)
 	return nil

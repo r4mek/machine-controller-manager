@@ -114,6 +114,9 @@ func (dc *controller) syncRolloutStatus(ctx context.Context, allISs []*v1alpha1.
 	newDeployment := d
 	newDeployment.Status = newStatus
 	_, err := dc.controlMachineClient.MachineDeployments(newDeployment.Namespace).UpdateStatus(ctx, newDeployment, metav1.UpdateOptions{})
+	if err == nil {
+		klog.V(3).Infof("tanaka %s", newDeployment.Name)
+	}
 	return err
 }
 

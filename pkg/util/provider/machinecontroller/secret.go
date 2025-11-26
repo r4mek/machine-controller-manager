@@ -111,6 +111,7 @@ func (c *controller) updateSecretFinalizers(ctx context.Context, secret *corev1.
 
 	clone := secret.DeepCopy()
 	clone.Finalizers = finalizers
+	klog.V(3).Infof("maverick")
 	_, err = c.controlCoreClient.CoreV1().Secrets(clone.Namespace).Update(ctx, clone, metav1.UpdateOptions{})
 
 	if err != nil {

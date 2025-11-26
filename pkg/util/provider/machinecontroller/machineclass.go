@@ -181,6 +181,7 @@ func (c *controller) updateMachineClassFinalizers(ctx context.Context, class *v1
 
 	clone := class.DeepCopy()
 	clone.Finalizers = finalizers
+	klog.V(3).Infof("jester")
 	_, err = c.controlMachineClient.MachineClasses(class.Namespace).Update(ctx, clone, metav1.UpdateOptions{})
 	if err != nil {
 		klog.Warning("Updating machineClass failed, retrying. ", class.Name, err)

@@ -22,13 +22,13 @@ func (c *controller) updateNodeWithAnnotations(ctx context.Context, node *v1.Nod
 
 	//append annotations
 	maps.Copy(node.Annotations, annotations)
-
 	_, err := c.targetCoreClient.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 
 	if err != nil {
 		klog.Errorf("Failed to update annotations for Node %q due to error: %s", node.Name, err)
 		return err
 	}
+	klog.V(3).Infof("linda %s", node.Name)
 
 	return nil
 }

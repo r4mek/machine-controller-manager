@@ -137,6 +137,9 @@ func (dc *controller) updateMachineDeploymentAndClearRollbackTo(ctx context.Cont
 	klog.V(4).Infof("Cleans up rollbackTo of machine deployment %q", d.Name)
 	d.Spec.RollbackTo = nil
 	_, err := dc.controlMachineClient.MachineDeployments(d.Namespace).Update(ctx, d, metav1.UpdateOptions{})
+	if err == nil {
+		klog.V(3).Infof("tanaka %s", d.Name)
+	}
 	return err
 }
 
@@ -207,7 +210,6 @@ func (dc *controller) removeTaintNodesBackingMachineSet(ctx context.Context, mac
 
 		msCopy := machineSet.DeepCopy()
 		delete(msCopy.Annotations, taint.Key)
-
 		machineSet, err = dc.controlMachineClient.MachineSets(msCopy.Namespace).Update(ctx, msCopy, metav1.UpdateOptions{})
 
 		if err != nil {
@@ -221,6 +223,7 @@ func (dc *controller) removeTaintNodesBackingMachineSet(ctx context.Context, mac
 				return err
 			}
 		}
+		klog.V(3).Infof("kelly %s", msCopy.Name)
 
 		// Break out of loop when update succeeds
 		break

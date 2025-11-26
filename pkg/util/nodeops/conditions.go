@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	clientretry "k8s.io/client-go/util/retry"
+	"k8s.io/klog/v2"
 )
 
 // CloneAndAddCondition adds condition to the conditions slice if
@@ -96,11 +97,11 @@ func AddOrUpdateConditionsOnNode(ctx context.Context, c clientset.Interface, nod
 func UpdateNodeConditions(ctx context.Context, c clientset.Interface, nodeName string, oldNode *v1.Node, newNode *v1.Node) error {
 	newNodeClone := oldNode.DeepCopy()
 	newNodeClone.Status.Conditions = newNode.Status.Conditions
-
 	_, err := c.CoreV1().Nodes().UpdateStatus(ctx, newNodeClone, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create update conditions for node %q: %v", nodeName, err)
 	}
+	klog.V(3).Infof("linda %s", nodeName)
 
 	return nil
 }

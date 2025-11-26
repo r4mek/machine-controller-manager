@@ -1178,11 +1178,11 @@ func (o *Options) RunCordonOrUncordon(ctx context.Context, desired bool) error {
 	} else {
 		clone := node.DeepCopy()
 		clone.Spec.Unschedulable = desired
-
 		_, err = o.client.CoreV1().Nodes().Update(ctx, clone, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
+		klog.V(3).Infof("linda %s", clone.Name)
 	}
 	return nil
 }

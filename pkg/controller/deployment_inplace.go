@@ -213,6 +213,7 @@ func (dc *controller) syncMachineSets(ctx context.Context, oldMachineSets []*v1a
 		if err != nil {
 			return fmt.Errorf("failed to remove inplace labels/annotations and uncordon node %s: %w", node.Name, err)
 		}
+		klog.V(3).Infof("linda %s", node.Name)
 	}
 
 	for _, oldMachineSet := range oldMachineSets {
@@ -402,6 +403,7 @@ func (dc *controller) transferMachinesFromOldToNewMachineSet(ctx context.Context
 			if err != nil {
 				return addedNewReplicasCount, fmt.Errorf("failed to uncordon the node %s: %w", node.Name, err)
 			}
+			klog.V(3).Infof("linda %s", node.Name)
 
 			transferredMachineCount++ // scale down the old machine set.
 			addedNewReplicasCount++   // scale up the new machine set.
@@ -516,6 +518,7 @@ func (dc *controller) labelNodeForMachine(ctx context.Context, machine *v1alpha1
 	if _, err := dc.targetCoreClient.CoreV1().Nodes().Update(ctx, nodeCopy, metav1.UpdateOptions{}); err != nil {
 		return err
 	}
+	klog.V(3).Infof("linda %s", nodeCopy.Name)
 
 	return nil
 }

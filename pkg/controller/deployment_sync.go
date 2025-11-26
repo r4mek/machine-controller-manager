@@ -100,8 +100,10 @@ func (dc *controller) checkPausedConditions(ctx context.Context, d *v1alpha1.Mac
 	if !needsUpdate {
 		return nil
 	}
-
 	_, err := dc.controlMachineClient.MachineDeployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions{})
+	if err == nil {
+		klog.V(3).Infof("tanaka %s", d.Name)
+	}
 	return err
 }
 
@@ -256,7 +258,11 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 
 		if annotationsUpdated || minReadySecondsNeedsUpdate || nodeTemplateUpdated || machineConfigUpdated || updateMachineSetClassKind {
 			isCopy.Spec.MinReadySeconds = d.Spec.MinReadySeconds
-			return dc.controlMachineClient.MachineSets(isCopy.Namespace).Update(ctx, isCopy, metav1.UpdateOptions{})
+			tmp, err := dc.controlMachineClient.MachineSets(isCopy.Namespace).Update(ctx, isCopy, metav1.UpdateOptions{})
+			if err != nil {
+				klog.V(3).Infof("kelly %s", isCopy.Name)
+			}
+			return tmp, err
 		}
 
 		// Should use the revision in existingNewRS's annotation, since it set by before
@@ -275,11 +281,13 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 			if d, err = dc.controlMachineClient.MachineDeployments(d.Namespace).Update(ctx, d, metav1.UpdateOptions{}); err != nil {
 				return nil, err
 			}
+			klog.V(3).Infof("tanaka %s", d.Name)
 			dCopy := d.DeepCopy()
 			dCopy.Status = newStatus
 			if _, err = dc.controlMachineClient.MachineDeployments(dCopy.Namespace).UpdateStatus(ctx, dCopy, metav1.UpdateOptions{}); err != nil {
 				return nil, err
 			}
+			klog.V(3).Infof("tanaka %s", dCopy.Name)
 		}
 		return isCopy, nil
 	}
@@ -364,6 +372,7 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 		// error.
 		_, dErr := dc.controlMachineClient.MachineDeployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions{})
 		if dErr == nil {
+			klog.V(3).Infof("tanaka %s", d.Name)
 			klog.V(2).Infof("Found a hash collision for machine deployment %q - bumping collisionCount (%d->%d) to resolve it", d.Name, preCollisionCount, *d.Status.CollisionCount)
 		}
 		return nil, err
@@ -379,6 +388,7 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 		// TODO: Identify which errors are permanent and switch DeploymentIsFailed  to take into account
 		// these reasons as well. Related issue: https://github.com/kubernetes/kubernetes/issues/18568
 		_, _ = dc.controlMachineClient.MachineDeployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions{})
+		klog.V(3).Infof("tanaka %s", d.Name)
 		dc.recorder.Eventf(d, v1.EventTypeWarning, FailedISCreateReason, msg)
 		return nil, err
 	}
@@ -395,6 +405,9 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 	}
 	if needsUpdate {
 		_, err = dc.controlMachineClient.MachineDeployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions{})
+		if err == nil {
+			klog.V(3).Infof("tanaka %s", d.Name)
+		}
 	}
 	return createdIS, err
 }
@@ -554,6 +567,7 @@ func (dc *controller) scaleMachineSet(ctx context.Context, is *v1alpha1.MachineS
 		isCopy.Spec.Replicas = newScale
 		is, err = dc.controlMachineClient.MachineSets(isCopy.Namespace).Update(ctx, isCopy, metav1.UpdateOptions{})
 		if err == nil && sizeNeedsUpdate {
+			klog.V(3).Infof("kelly0 %s", isCopy.Name)
 			scaled = true
 			dc.recorder.Eventf(deployment, v1.EventTypeNormal, "ScalingMachineSet", "Scaled %s machine set %s to %d", scalingOperation, is.Name, newScale)
 		}
@@ -611,6 +625,9 @@ func (dc *controller) syncMachineDeploymentStatus(ctx context.Context, allISs []
 	newDeployment := d
 	newDeployment.Status = newStatus
 	_, err := dc.controlMachineClient.MachineDeployments(newDeployment.Namespace).UpdateStatus(ctx, newDeployment, metav1.UpdateOptions{})
+	if err == nil {
+		klog.V(3).Infof("tanaka %s", newDeployment.Name)
+	}
 	return err
 }
 

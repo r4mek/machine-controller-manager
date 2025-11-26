@@ -811,10 +811,10 @@ func (c *controller) updateMachineSetFinalizers(ctx context.Context, machineSet 
 
 		clone := machineSet.DeepCopy()
 		clone.Finalizers = finalizers
-
 		_, err = c.controlMachineClient.MachineSets(clone.Namespace).Update(ctx, clone, metav1.UpdateOptions{})
 
 		if err == nil {
+			klog.V(3).Infof("kelly %s", clone.Name)
 			return nil
 		}
 	}
@@ -842,13 +842,13 @@ func (c *controller) updateMachineStatus(
 		klog.V(3).Infof("Not updating the status of the machine object %q , as it is already same", clone.Name)
 		return machine, nil
 	}
-
 	clone, err = c.controlMachineClient.Machines(clone.Namespace).UpdateStatus(ctx, clone, metav1.UpdateOptions{})
 	if err != nil {
 		// Keep retrying until update goes through
 		klog.V(3).Infof("Warning: Updated failed, retrying, error: %q", err)
 		return c.updateMachineStatus(ctx, machine, lastOperation, currentStatus)
 	}
+	klog.V(3).Infof("sierra %s", clone.Name)
 	return clone, nil
 }
 
@@ -891,6 +891,9 @@ func UpdateMachineWithRetries(ctx context.Context, machineClient v1alpha1client.
 			return applyErr
 		}
 		machine, err = machineClient.Update(ctx, machine, metav1.UpdateOptions{})
+		if err == nil {
+			klog.V(3).Infof("sierra %s", machine.Name)
+		}
 		return err
 	})
 

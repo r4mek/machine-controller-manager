@@ -61,6 +61,9 @@ func UpdateISWithRetries(ctx context.Context, isClient v1alpha1client.MachineSet
 			return applyErr
 		}
 		is, err = isClient.Update(ctx, is, metav1.UpdateOptions{})
+		if err == nil {
+			klog.V(3).Infof("kelly %s", is.Name)
+		}
 		return err
 	})
 

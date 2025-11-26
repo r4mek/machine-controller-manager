@@ -940,11 +940,11 @@ func AddOrUpdateAnnotationOnNode(ctx context.Context, c clientset.Interface, nod
 func UpdateNodeAnnotations(ctx context.Context, c clientset.Interface, nodeName string, oldNode *v1.Node, newNode *v1.Node) error {
 	newNodeClone := oldNode.DeepCopy()
 	newNodeClone.Annotations = newNode.Annotations
-
 	_, err := c.CoreV1().Nodes().Update(ctx, newNodeClone, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create or update annotations for node %q: %v", nodeName, err)
 	}
+	klog.V(3).Infof("linda %s", nodeName)
 
 	return err
 }

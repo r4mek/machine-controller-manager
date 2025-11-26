@@ -72,6 +72,7 @@ func updateMachineSetStatus(ctx context.Context, machineClient machineapi.Machin
 		updatedIS, updateErr = c.UpdateStatus(ctx, is, metav1.UpdateOptions{})
 
 		if updateErr == nil {
+			klog.V(3).Infof("kellys %s", is.Name)
 			return updatedIS, nil
 		}
 		// Stop retrying if we exceed statusUpdateRetries - the MachineSet will be requeued with a rate limit.

@@ -500,6 +500,7 @@ func (dc *controller) reconcileClusterMachineDeployment(key string) error {
 				return fmt.Errorf("failed to update status for machine deployment %s: %w", deployment.Name, err)
 
 			}
+			klog.V(3).Infof("tanaka %s", d.Name)
 		}
 		return nil
 	}
@@ -638,6 +639,8 @@ func (dc *controller) updateMachineDeploymentFinalizers(ctx context.Context, mac
 		// Keep retrying until update goes through
 		klog.Warning("Updated failed, retrying")
 		dc.updateMachineDeploymentFinalizers(ctx, machineDeployment, finalizers)
+	} else {
+		klog.V(3).Infof("tanaka %s", clone.Name)
 	}
 }
 
@@ -674,6 +677,7 @@ func (dc *controller) setMachinePriorityAnnotationAndUpdateTriggeredForDeletion(
 			klog.Errorf("Failed to set MachinePriority=1 annotation on Machine %q of MachineDeployment %q: %v", machineName, mcd.Name, err)
 			return err
 		}
+		klog.V(3).Infof("sierra %s", mcAdjust.Name)
 		klog.V(3).Infof("Machine %q of MachineDeployment %q marked with MachinePriority=1 annotation successfully", machineName, mcd.Name)
 	}
 
@@ -695,6 +699,7 @@ func (dc *controller) setMachinePriorityAnnotationAndUpdateTriggeredForDeletion(
 		klog.Errorf("Failed to update MachineDeployment %q with #%d machine names still pending deletion, triggerDeletionAnnotValue=%q", mcd.Name, len(triggerForDeletionMachineNames), triggerDeletionAnnotValue)
 		return err
 	}
+	klog.V(3).Infof("tanaka %s", mcdAdjust.Name)
 	klog.V(3).Infof("Updated MachineDeployment %q with #%d machine names still pending deletion, triggerDeletionAnnotValue=%q", mcd.Name, len(triggerForDeletionMachineNames), triggerDeletionAnnotValue)
 	return nil
 }

@@ -91,6 +91,7 @@ func (c *controller) reconcileClusterMachineSafetyAPIServer(_ string) error {
 						klog.Error("SafetyController: Unable to UPDATE machine/status. Error:", err)
 						return err
 					}
+					klog.V(3).Infof("sierra %s", machine.Name)
 
 					klog.V(2).Infof("SafetyController: Reinitializing machine health check for machine: %q with backing node: %q and providerID: %q", machine.Name, getNodeName(machine), getProviderID(machine))
 				}

@@ -255,13 +255,13 @@ func (c *controller) syncMachineNameToNode(ctx context.Context, machine *v1alpha
 		nodeCopy.Labels = make(map[string]string)
 	}
 	nodeCopy.Labels[machineutils.MachineLabelKey] = machine.Name
-
 	if _, err := c.targetCoreClient.CoreV1().Nodes().Update(ctx, nodeCopy, metav1.UpdateOptions{}); err != nil {
 		if apierrors.IsConflict(err) {
 			return machineutils.ConflictRetry, err
 		}
 		return machineutils.ShortRetry, err
 	}
+	klog.V(3).Infof("linda %s", nodeCopy.Name)
 
 	return machineutils.LongRetry, nil
 }
@@ -361,6 +361,7 @@ func (c *controller) updateNodeConditionBasedOnLabel(ctx context.Context, machin
 			return machineutils.ShortRetry, err
 		}
 	}
+	klog.V(3).Infof("linda %s", nodeCopy.Name)
 
 	return machineutils.LongRetry, nil
 }
@@ -452,7 +453,6 @@ func (c *controller) updateMachineStatusAndNodeCondition(ctx context.Context, ma
 		Type:           v1alpha1.MachineOperationInPlaceUpdate,
 		LastUpdateTime: metav1.Now(),
 	}
-
 	if _, err := c.controlMachineClient.Machines(machine.Namespace).UpdateStatus(ctx, machine, metav1.UpdateOptions{}); err != nil {
 		// Keep retrying across reconciles until update goes through
 		klog.Errorf("Update of Phase/Conditions failed for machine %q. Retrying, error: %q", machine.Name, err)
@@ -460,6 +460,7 @@ func (c *controller) updateMachineStatusAndNodeCondition(ctx context.Context, ma
 			return machineutils.ConflictRetry, err
 		}
 	}
+	klog.V(3).Infof("sierra %s", machine.Name)
 
 	cond, err := nodeops.GetNodeCondition(ctx, c.targetCoreClient, getNodeName(machine), v1alpha1.NodeInPlaceUpdate)
 	if err != nil {
@@ -580,6 +581,7 @@ func (c *controller) syncNodeTemplates(ctx context.Context, machine *v1alpha1.Ma
 			klog.Errorf("UpdateStatus failed for node %q of machine %q. error: %q", node.Name, machine.Name, err)
 			return machineutils.ShortRetry, err
 		}
+		klog.V(3).Infof("linda %s", nodeCopy.Name)
 		klog.V(3).Infof("node.Status.Capacity of node %q updated to: %v", node.Name, nodeUpdated.Status.Capacity)
 		currentlyAppliedVirtualCapacityJSONByte, err = json.Marshal(desiredVirtualCapacity)
 		if err != nil {
@@ -593,7 +595,6 @@ func (c *controller) syncNodeTemplates(ctx context.Context, machine *v1alpha1.Ma
 			nodeCopy.Annotations[machineutils.LastAppliedVirtualCapacityAnnotation] = string(currentlyAppliedVirtualCapacityJSONByte)
 		}
 	}
-
 	_, err = c.targetCoreClient.CoreV1().Nodes().Update(ctx, nodeCopy, metav1.UpdateOptions{})
 	if err != nil {
 		// Keep retrying until update goes through
@@ -601,6 +602,7 @@ func (c *controller) syncNodeTemplates(ctx context.Context, machine *v1alpha1.Ma
 	} else {
 		// Return error to continue in next reconcile
 		err = errSuccessfulALTsync
+		klog.V(3).Infof("linda %s", nodeCopy.Name)
 	}
 
 	if apierrors.IsConflict(err) {
@@ -854,15 +856,16 @@ func (c *controller) machineStatusUpdate(
 
 	if isMachineStatusSimilar(clone.Status, machine.Status) {
 		klog.V(3).Infof("Not updating the status of the machine object %q, as the content is similar", clone.Name)
+		klog.V(3).Infof("similar description detected %s : %s", machine.Status.LastOperation.Description, clone.Status.LastOperation.Description)
 		return machineutils.ShortRetry, nil
 	}
-
 	_, err := c.controlMachineClient.Machines(clone.Namespace).UpdateStatus(ctx, clone, metav1.UpdateOptions{})
 	if err != nil {
 		// Keep retrying until update goes through
 		klog.Warningf("Machine/status UPDATE failed for machine %q. Retrying, error: %s", machine.Name, err)
 	} else {
 		klog.V(2).Infof("Machine/status UPDATE for %q", machine.Name)
+		klog.V(3).Infof("sierra %s", clone.Name)
 	}
 
 	if apierrors.IsConflict(err) {
@@ -1161,6 +1164,7 @@ func (c *controller) reconcileMachineHealth(ctx context.Context, machine *v1alph
 			}
 		} else {
 			klog.V(2).Infof("Machine Phase/Conditions have been updated for %q with providerID %q and are in sync with backing node %q", machine.Name, getProviderID(machine), getNodeName(machine))
+			klog.V(3).Infof("sierra %s", clone.Name)
 			// Return error to end the reconcile
 			err = errSuccessfulPhaseUpdate
 		}
@@ -1200,6 +1204,7 @@ func (c *controller) addMachineFinalizers(ctx context.Context, machine *v1alpha1
 			klog.Errorf("Failed to add finalizers for machine %q: %s", machine.Name, err)
 		} else {
 			// Return error even when machine object is updated
+			klog.V(3).Infof("sierra %s", clone.Name)
 			klog.V(2).Infof("Added finalizer to machine %q with providerID %q and backing node %q", machine.Name, getProviderID(machine), getNodeName(machine))
 			err = fmt.Errorf("Machine creation in process. Machine finalizers are UPDATED")
 		}
@@ -1222,6 +1227,7 @@ func (c *controller) deleteMachineFinalizers(ctx context.Context, machine *v1alp
 			klog.Errorf("Failed to delete finalizers for machine %q: %s", machine.Name, err)
 			return machineutils.ShortRetry, err
 		}
+		klog.V(3).Infof("sierra %s", clone.Name)
 
 		klog.V(2).Infof("Removed finalizer to machine %q with providerID %q and backing node %q", machine.Name, getProviderID(machine), getNodeName(machine))
 		return machineutils.LongRetry, nil
@@ -1295,12 +1301,12 @@ func (c *controller) setMachineTerminationStatus(ctx context.Context, deleteMach
 		// TimeoutActive:  false,
 		LastUpdateTime: metav1.Now(),
 	}
-
 	_, err := c.controlMachineClient.Machines(clone.Namespace).UpdateStatus(ctx, clone, metav1.UpdateOptions{})
 	if err != nil {
 		// Keep retrying until update goes through
 		klog.Errorf("Machine/status UPDATE failed for machine %q. Retrying, error: %s", deleteMachineRequest.Machine.Name, err)
 	} else {
+		klog.V(3).Infof("sierra %s", clone.Name)
 		klog.V(2).Infof("Machine %q status updated to terminating ", deleteMachineRequest.Machine.Name)
 		// Return error even when machine object is updated to ensure reconcilation is restarted
 		err = fmt.Errorf("Machine deletion in process. Phase set to termination")
@@ -2055,7 +2061,6 @@ func (c *controller) updateMachineToFailedState(ctx context.Context, description
 		// TimeoutActive:  false,
 		LastUpdateTime: metav1.Now(),
 	}
-
 	_, err := c.controlMachineClient.Machines(clone.Namespace).UpdateStatus(ctx, clone, metav1.UpdateOptions{})
 	updated := false
 	if err != nil {
@@ -2063,6 +2068,7 @@ func (c *controller) updateMachineToFailedState(ctx context.Context, description
 		klog.Errorf("update failed for machine %q in function. Retrying, error: %q", machine.Name, err)
 	} else {
 		updated = true
+		klog.V(3).Infof("sierra %s", clone.Name)
 		klog.Infof("Machine State has been updated to Phase %q for %q with providerID %q and backing node %q", clone.Status.CurrentStatus.Phase, machine.Name, getProviderID(machine), getNodeName(machine))
 	}
 
@@ -2238,6 +2244,7 @@ func (c *controller) updateMachineNodeLabel(ctx context.Context, machine *v1alph
 		klog.Warningf("Failed to update %q label on machine %q to %q. Retrying, error: %s", v1alpha1.NodeLabelKey, machine.Name, nodeName, err)
 		return err
 	}
+	klog.V(3).Infof("sierra %s", clone.Name)
 	klog.V(2).Infof("Updated %q label on machine %q to %q", v1alpha1.NodeLabelKey, machine.Name, nodeName)
 	return nil
 }

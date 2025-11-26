@@ -661,6 +661,7 @@ func (c *controller) triggerCreationFlow(ctx context.Context, createMachineReque
 			if _, err := c.controlMachineClient.Machines(clone.Namespace).UpdateStatus(ctx, clone, metav1.UpdateOptions{}); err != nil {
 				return machineutils.ShortRetry, fmt.Errorf("failed to persist status addresses after initialization was successful: %w", err)
 			}
+			klog.V(3).Infof("sierra %s", clone.Name)
 		}
 
 		// Return error even when machine object is updated
@@ -694,11 +695,11 @@ func (c *controller) triggerCreationFlow(ctx context.Context, createMachineReque
 			clone.Status.CurrentStatus.TimeoutActive = false
 			clone.Status.Addresses = buildAddressStatus(addresses, nodeName)
 		}
-
 		_, err := c.controlMachineClient.Machines(clone.Namespace).UpdateStatus(ctx, clone, metav1.UpdateOptions{})
 		if err != nil {
 			klog.Warningf("Machine/status UPDATE failed for %q. Retrying, error: %s", machine.Name, err)
 		} else {
+			klog.V(3).Infof("sierra %s", clone.Name)
 			klog.V(2).Infof("Machine/status UPDATE for %q during creation", machine.Name)
 			// Return error even when machine object is updated
 			err = fmt.Errorf("machine creation in process. Machine/Status UPDATE successful")
@@ -731,6 +732,7 @@ func (c *controller) updateLabels(ctx context.Context, machine *v1alpha1.Machine
 			klog.Warningf("Machine labels/annotations UPDATE failed for %q. Will retry after VM initialization (if required), error: %s", machine.Name, err)
 			clone = machine.DeepCopy()
 		} else {
+			klog.V(3).Infof("sierra %s", clone.Name)
 			clone = updatedMachine
 			klog.V(2).Infof("Machine labels/annotations UPDATE for %q", clone.Name)
 			err = fmt.Errorf("machine creation in process. Machine labels/annotations update is successful")
