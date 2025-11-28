@@ -258,11 +258,7 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 
 		if annotationsUpdated || minReadySecondsNeedsUpdate || nodeTemplateUpdated || machineConfigUpdated || updateMachineSetClassKind {
 			isCopy.Spec.MinReadySeconds = d.Spec.MinReadySeconds
-			tmp, err := dc.controlMachineClient.MachineSets(isCopy.Namespace).Update(ctx, isCopy, metav1.UpdateOptions{})
-			if err != nil {
-				klog.V(3).Infof("kelly %s", isCopy.Name)
-			}
-			return tmp, err
+			return dc.controlMachineClient.MachineSets(isCopy.Namespace).Update(ctx, isCopy, metav1.UpdateOptions{})
 		}
 
 		// Should use the revision in existingNewRS's annotation, since it set by before
@@ -281,13 +277,11 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 			if d, err = dc.controlMachineClient.MachineDeployments(d.Namespace).Update(ctx, d, metav1.UpdateOptions{}); err != nil {
 				return nil, err
 			}
-			klog.V(3).Infof("tanaka %s", d.Name)
 			dCopy := d.DeepCopy()
 			dCopy.Status = newStatus
 			if _, err = dc.controlMachineClient.MachineDeployments(dCopy.Namespace).UpdateStatus(ctx, dCopy, metav1.UpdateOptions{}); err != nil {
 				return nil, err
 			}
-			klog.V(3).Infof("tanaka %s", dCopy.Name)
 		}
 		return isCopy, nil
 	}
@@ -372,7 +366,6 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 		// error.
 		_, dErr := dc.controlMachineClient.MachineDeployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions{})
 		if dErr == nil {
-			klog.V(3).Infof("tanaka %s", d.Name)
 			klog.V(2).Infof("Found a hash collision for machine deployment %q - bumping collisionCount (%d->%d) to resolve it", d.Name, preCollisionCount, *d.Status.CollisionCount)
 		}
 		return nil, err
@@ -388,7 +381,6 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 		// TODO: Identify which errors are permanent and switch DeploymentIsFailed  to take into account
 		// these reasons as well. Related issue: https://github.com/kubernetes/kubernetes/issues/18568
 		_, _ = dc.controlMachineClient.MachineDeployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions{})
-		klog.V(3).Infof("tanaka %s", d.Name)
 		dc.recorder.Eventf(d, v1.EventTypeWarning, FailedISCreateReason, msg)
 		return nil, err
 	}
@@ -405,9 +397,6 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 	}
 	if needsUpdate {
 		_, err = dc.controlMachineClient.MachineDeployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions{})
-		if err == nil {
-			klog.V(3).Infof("tanaka %s", d.Name)
-		}
 	}
 	return createdIS, err
 }
@@ -483,7 +472,10 @@ func (dc *controller) scale(ctx context.Context, deployment *v1alpha1.MachineDep
 			// Incorporate any leftovers to the largest machine set.
 			if i == 0 && deploymentReplicasToAdd != 0 {
 				leftover := deploymentReplicasToAdd - deploymentReplicasAdded
-				nameToSize[is.Name] = max(nameToSize[is.Name]+leftover, 0)
+				nameToSize[is.Name] = nameToSize[is.Name] + leftover
+				if nameToSize[is.Name] < 0 {
+					nameToSize[is.Name] = 0
+				}
 				klog.V(3).Infof("leftover proportion increase of %d done in largest machineSet %s", leftover, is.Name)
 			}
 
@@ -567,7 +559,6 @@ func (dc *controller) scaleMachineSet(ctx context.Context, is *v1alpha1.MachineS
 		isCopy.Spec.Replicas = newScale
 		is, err = dc.controlMachineClient.MachineSets(isCopy.Namespace).Update(ctx, isCopy, metav1.UpdateOptions{})
 		if err == nil && sizeNeedsUpdate {
-			klog.V(3).Infof("kelly0 %s", isCopy.Name)
 			scaled = true
 			dc.recorder.Eventf(deployment, v1.EventTypeNormal, "ScalingMachineSet", "Scaled %s machine set %s to %d", scalingOperation, is.Name, newScale)
 		}
@@ -597,7 +588,7 @@ func (dc *controller) cleanupMachineDeployment(ctx context.Context, oldISs []*v1
 	sort.Sort(MachineSetsByCreationTimestamp(cleanableISes))
 	klog.V(4).Infof("Looking to cleanup old machine sets for deployment %q", deployment.Name)
 
-	for i := range diff {
+	for i := int32(0); i < diff; i++ {
 		is := cleanableISes[i]
 		// Avoid delete machine set with non-zero replica counts
 		if is.Status.Replicas != 0 || (is.Spec.Replicas) != 0 || is.Generation > is.Status.ObservedGeneration || is.DeletionTimestamp != nil {
@@ -625,9 +616,6 @@ func (dc *controller) syncMachineDeploymentStatus(ctx context.Context, allISs []
 	newDeployment := d
 	newDeployment.Status = newStatus
 	_, err := dc.controlMachineClient.MachineDeployments(newDeployment.Namespace).UpdateStatus(ctx, newDeployment, metav1.UpdateOptions{})
-	if err == nil {
-		klog.V(3).Infof("tanaka %s", newDeployment.Name)
-	}
 	return err
 }
 
@@ -635,9 +623,12 @@ func (dc *controller) syncMachineDeploymentStatus(ctx context.Context, allISs []
 func calculateDeploymentStatus(allISs []*v1alpha1.MachineSet, newIS *v1alpha1.MachineSet, deployment *v1alpha1.MachineDeployment) v1alpha1.MachineDeploymentStatus {
 	availableReplicas := GetAvailableReplicaCountForMachineSets(allISs)
 	totalReplicas := GetReplicaCountForMachineSets(allISs)
+	unavailableReplicas := totalReplicas - availableReplicas
 	// If unavailableReplicas is negative, then that means the Deployment has more available replicas running than
 	// desired, e.g. whenever it scales down. In such a case we should simply default unavailableReplicas to zero.
-	unavailableReplicas := max(totalReplicas-availableReplicas, 0)
+	if unavailableReplicas < 0 {
+		unavailableReplicas = 0
+	}
 
 	status := v1alpha1.MachineDeploymentStatus{
 		// TODO: Ensure that if we start retrying status updates, we won't pick up a new Generation value.

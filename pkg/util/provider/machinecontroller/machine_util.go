@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gardener/machine-controller-manager/pkg/metrics"
 	"maps"
 	"math"
 	"math/rand"
@@ -460,6 +461,8 @@ func (c *controller) updateMachineStatusAndNodeCondition(ctx context.Context, ma
 		if apierrors.IsConflict(err) {
 			return machineutils.ConflictRetry, err
 		}
+	} else {
+		klog.Infof("Updated Phase/Conditions of machine %q successfully, MCUpdateCount=%d", machine.Name, metrics.MCUpdateCounter.Add(1))
 	}
 	klog.V(3).Infof("sierra %s", machine.Name)
 
@@ -1207,6 +1210,7 @@ func (c *controller) addMachineFinalizers(ctx context.Context, machine *v1alpha1
 			// Return error even when machine object is updated
 			klog.V(3).Infof("sierra %s", clone.Name)
 			klog.V(2).Infof("Added finalizer to machine %q with providerID %q and backing node %q", machine.Name, getProviderID(machine), getNodeName(machine))
+			klog.V(2).Infof("Added finalizer to machine %q with providerID %q and backing node %q, MCUpdateCount=%d", machine.Name, getProviderID(machine), getNodeName(machine), metrics.MCUpdateCounter.Add(1))
 			err = fmt.Errorf("Machine creation in process. Machine finalizers are UPDATED")
 		}
 
@@ -1230,7 +1234,7 @@ func (c *controller) deleteMachineFinalizers(ctx context.Context, machine *v1alp
 		}
 		klog.V(3).Infof("sierra %s", clone.Name)
 
-		klog.V(2).Infof("Removed finalizer to machine %q with providerID %q and backing node %q", machine.Name, getProviderID(machine), getNodeName(machine))
+		klog.V(2).Infof("Removed finalizer to machine %q with providerID %q and backing node %q, MCUpdateCount=%d", machine.Name, getProviderID(machine), getNodeName(machine), metrics.MCUpdateCounter.Add(1))
 		return machineutils.LongRetry, nil
 	}
 
@@ -2079,7 +2083,7 @@ func (c *controller) updateMachineToFailedState(ctx context.Context, description
 	} else {
 		updated = true
 		klog.V(3).Infof("sierra %s", clone.Name)
-		klog.Infof("Machine State has been updated to Phase %q for %q with providerID %q and backing node %q", clone.Status.CurrentStatus.Phase, machine.Name, getProviderID(machine), getNodeName(machine))
+		klog.Infof("Machine State has been updated to Phase %q for %q with providerID %q and backing node %q, MCUpdateCount=%d", clone.Status.CurrentStatus.Phase, machine.Name, getProviderID(machine), getNodeName(machine), metrics.MCUpdateCounter.Add(1))
 	}
 
 	return updated, err
@@ -2255,7 +2259,7 @@ func (c *controller) updateMachineNodeLabel(ctx context.Context, machine *v1alph
 		return err
 	}
 	klog.V(3).Infof("sierra %s", clone.Name)
-	klog.V(2).Infof("Updated %q label on machine %q to %q", v1alpha1.NodeLabelKey, machine.Name, nodeName)
+	klog.V(2).Infof("Updated %q label on machine %q to %q, MCUpdateCount=%d", v1alpha1.NodeLabelKey, machine.Name, nodeName, metrics.MCUpdateCounter.Add(1))
 	return nil
 }
 

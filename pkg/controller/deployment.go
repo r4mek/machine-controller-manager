@@ -25,6 +25,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/machine-controller-manager/pkg/metrics"
 	"reflect"
 	"sync"
 	"time"
@@ -640,7 +641,7 @@ func (dc *controller) updateMachineDeploymentFinalizers(ctx context.Context, mac
 		klog.Warning("Updated failed, retrying")
 		dc.updateMachineDeploymentFinalizers(ctx, machineDeployment, finalizers)
 	} else {
-		klog.V(3).Infof("tanaka %s", clone.Name)
+		klog.V(2).Infof("tanaka Updated machineDeployment %q finalizers to %v, MCDUpdateCount=%d", machineDeployment.Name, finalizers, metrics.MCDUpdateCounter.Add(1))
 	}
 }
 
@@ -678,7 +679,7 @@ func (dc *controller) setMachinePriorityAnnotationAndUpdateTriggeredForDeletion(
 			return err
 		}
 		klog.V(3).Infof("sierra %s", mcAdjust.Name)
-		klog.V(3).Infof("Machine %q of MachineDeployment %q marked with MachinePriority=1 annotation successfully", machineName, mcd.Name)
+		klog.V(2).Infof("Machine %q of MachineDeployment %q marked with MachinePriority=1 annotation successfully, MCUpdateCount=%d", machineName, mcd.Name, metrics.MCUpdateCounter.Add(1))
 	}
 
 	if len(skipTriggerForDeletionMachineNames) == 0 {
@@ -700,6 +701,6 @@ func (dc *controller) setMachinePriorityAnnotationAndUpdateTriggeredForDeletion(
 		return err
 	}
 	klog.V(3).Infof("tanaka %s", mcdAdjust.Name)
-	klog.V(3).Infof("Updated MachineDeployment %q with #%d machine names still pending deletion, triggerDeletionAnnotValue=%q", mcd.Name, len(triggerForDeletionMachineNames), triggerDeletionAnnotValue)
+	klog.V(2).Infof("Updated MachineDeployment %q with #%d machine names still pending deletion, triggerDeletionAnnotValue=%q, MCDUpdateCount=%d", mcd.Name, len(triggerForDeletionMachineNames), triggerDeletionAnnotValue, metrics.MCDUpdateCounter.Add(1))
 	return nil
 }
