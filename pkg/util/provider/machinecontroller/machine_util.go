@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gardener/machine-controller-manager/pkg/metrics"
 	"math"
 	"runtime"
 	"strconv"
@@ -460,6 +461,8 @@ func (c *controller) updateMachineStatusAndNodeCondition(ctx context.Context, ma
 		if apierrors.IsConflict(err) {
 			return machineutils.ConflictRetry, err
 		}
+	} else {
+		klog.Infof("Updated Phase/Conditions of machine %q successfully, MCUpdateCount=%d", machine.Name, metrics.MCUpdateCounter.Add(1))
 	}
 
 	cond, err := nodeops.GetNodeCondition(ctx, c.targetCoreClient, getNodeName(machine), v1alpha1.NodeInPlaceUpdate)
@@ -863,7 +866,7 @@ func (c *controller) machineStatusUpdate(
 		// Keep retrying until update goes through
 		klog.Warningf("Machine/status UPDATE failed for machine %q. Retrying, error: %s", machine.Name, err)
 	} else {
-		klog.V(2).Infof("Machine/status UPDATE for %q", machine.Name)
+		klog.V(2).Infof("Machine/status UPDATE for %q, MCUpdateCount=%d", machine.Name, metrics.MCUpdateCounter.Add(1))
 	}
 
 	if apierrors.IsConflict(err) {
@@ -1201,7 +1204,7 @@ func (c *controller) addMachineFinalizers(ctx context.Context, machine *v1alpha1
 			klog.Errorf("Failed to add finalizers for machine %q: %s", machine.Name, err)
 		} else {
 			// Return error even when machine object is updated
-			klog.V(2).Infof("Added finalizer to machine %q with providerID %q and backing node %q", machine.Name, getProviderID(machine), getNodeName(machine))
+			klog.V(2).Infof("Added finalizer to machine %q with providerID %q and backing node %q, MCUpdateCount=%d", machine.Name, getProviderID(machine), getNodeName(machine), metrics.MCUpdateCounter.Add(1))
 			err = fmt.Errorf("Machine creation in process. Machine finalizers are UPDATED")
 		}
 
@@ -1224,7 +1227,7 @@ func (c *controller) deleteMachineFinalizers(ctx context.Context, machine *v1alp
 			return machineutils.ShortRetry, err
 		}
 
-		klog.V(2).Infof("Removed finalizer to machine %q with providerID %q and backing node %q", machine.Name, getProviderID(machine), getNodeName(machine))
+		klog.V(2).Infof("Removed finalizer to machine %q with providerID %q and backing node %q, MCUpdateCount=%d", machine.Name, getProviderID(machine), getNodeName(machine), metrics.MCUpdateCounter.Add(1))
 		return machineutils.LongRetry, nil
 	}
 
@@ -2239,7 +2242,7 @@ func (c *controller) updateMachineNodeLabel(ctx context.Context, machine *v1alph
 		klog.Warningf("Failed to update %q label on machine %q to %q. Retrying, error: %s", v1alpha1.NodeLabelKey, machine.Name, nodeName, err)
 		return err
 	}
-	klog.V(2).Infof("Updated %q label on machine %q to %q", v1alpha1.NodeLabelKey, machine.Name, nodeName)
+	klog.V(2).Infof("Updated %q label on machine %q to %q, MCUpdateCount=%d", v1alpha1.NodeLabelKey, machine.Name, nodeName, metrics.MCUpdateCounter.Add(1))
 	return nil
 }
 

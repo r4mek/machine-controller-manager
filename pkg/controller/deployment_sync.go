@@ -25,6 +25,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/machine-controller-manager/pkg/metrics"
 	"reflect"
 	"sort"
 	"strconv"
@@ -256,7 +257,11 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 
 		if annotationsUpdated || minReadySecondsNeedsUpdate || nodeTemplateUpdated || machineConfigUpdated || updateMachineSetClassKind {
 			isCopy.Spec.MinReadySeconds = d.Spec.MinReadySeconds
-			return dc.controlMachineClient.MachineSets(isCopy.Namespace).Update(ctx, isCopy, metav1.UpdateOptions{})
+			ms, err := dc.controlMachineClient.MachineSets(isCopy.Namespace).Update(ctx, isCopy, metav1.UpdateOptions{})
+			if err == nil {
+				klog.V(2).Infof("Updated machine set %q annotations, MCSUpdateCount=%d", isCopy.Name, metrics.MCSUpdateCounter.Add(1))
+			}
+			return ms, err
 		}
 
 		// Should use the revision in existingNewRS's annotation, since it set by before
@@ -274,6 +279,8 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 			newStatus := d.Status
 			if d, err = dc.controlMachineClient.MachineDeployments(d.Namespace).Update(ctx, d, metav1.UpdateOptions{}); err != nil {
 				return nil, err
+			} else {
+				klog.V(2).Infof("Updated machine deployment %q status, MCDUpdateCount=%d", d.Name, metrics.MCDUpdateCounter.Add(1))
 			}
 			dCopy := d.DeepCopy()
 			dCopy.Status = newStatus
@@ -557,6 +564,7 @@ func (dc *controller) scaleMachineSet(ctx context.Context, is *v1alpha1.MachineS
 		isCopy.Spec.Replicas = newScale
 		is, err = dc.controlMachineClient.MachineSets(isCopy.Namespace).Update(ctx, isCopy, metav1.UpdateOptions{})
 		if err == nil && sizeNeedsUpdate {
+			klog.V(3).Infof("Scaling machine set %s to %d, MCSUpdateCount=%d", is.Name, newScale, metrics.MCSUpdateCounter.Add(1))
 			scaled = true
 			dc.recorder.Eventf(deployment, v1.EventTypeNormal, "ScalingMachineSet", "Scaled %s machine set %s to %d", scalingOperation, is.Name, newScale)
 		}

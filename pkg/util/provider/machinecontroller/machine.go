@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gardener/machine-controller-manager/pkg/metrics"
 	"maps"
 	"slices"
 	"strings"
@@ -727,7 +728,7 @@ func (c *controller) updateLabels(ctx context.Context, machine *v1alpha1.Machine
 			clone = machine.DeepCopy()
 		} else {
 			clone = updatedMachine
-			klog.V(2).Infof("Machine labels/annotations UPDATE for %q", clone.Name)
+			klog.V(2).Infof("Machine labels/annotations UPDATE for %q, MCUpdateCount=%d", clone.Name, metrics.MCUpdateCounter.Add(1))
 			err = fmt.Errorf("machine creation in process. Machine labels/annotations update is successful")
 		}
 	}

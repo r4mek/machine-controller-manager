@@ -8,6 +8,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/gardener/machine-controller-manager/pkg/metrics"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -107,8 +108,10 @@ func (c *controller) unfreezeMachineDeploymentsWithUnfreezeAnnotation(ctx contex
 					clone.Annotations[UnfreezeAnnotation] = "True"
 					machineSet, err = c.controlMachineClient.MachineSets(clone.Namespace).Update(ctx, clone, metav1.UpdateOptions{})
 					if err != nil {
-						klog.Errorf("SafetyController: MachineSet %s UPDATE failed. Error: %s", machineSet.Name, err)
+						klog.Errorf("SafetyController: MachineSet %s UPDATE failed. Error: %s", clone.Name, err)
 						return err
+					} else {
+						klog.V(2).Infof("SafetyController: Added UnfreezeAnnotation on MachineSet %q, MCSUpdateCount=%d", machineSet.Name, metrics.MCSUpdateCounter.Add(1))
 					}
 				}
 			}
@@ -328,6 +331,8 @@ func (c *controller) freezeMachineSetAndDeployment(ctx context.Context, machineS
 	if err != nil {
 		klog.Errorf("SafetyController: MachineSet UPDATE failed. Error: %s", err)
 		return err
+	} else {
+		klog.V(2).Infof("SafetyController: Added freeze label on MachineSet %q, MCSUpdateCount=%d", machineSet.Name, metrics.MCSUpdateCounter.Add(1))
 	}
 
 	machineDeployments := c.getMachineDeploymentsForMachineSet(machineSet)
@@ -408,6 +413,8 @@ func (c *controller) unfreezeMachineSet(ctx context.Context, machineSet *v1alpha
 	if err != nil {
 		klog.Errorf("SafetyController: MachineSet UPDATE failed. Error: %s", err)
 		return err
+	} else {
+		klog.V(2).Infof("SafetyController: Removed freeze annotation on MachineSet %q, MCSUpdateCount=%d", machineSet.Name, metrics.MCSUpdateCounter.Add(1))
 	}
 
 	c.recorder.Eventf(machineSet, corev1.EventTypeNormal, MachineSetUnfreezeEvent, "SafetyController: Unfroze MachineSet %s", machineSet.Name)
@@ -446,7 +453,7 @@ func (c *controller) freezeMachineDeployment(ctx context.Context, machineDeploym
 		return err
 	}
 
-	klog.V(2).Infof("SafetyController: Froze MachineDeployment %q due to %s", machineDeployment.Name, reason)
+	klog.V(2).Infof("SafetyController: Froze MachineDeployment %q due to %s, MCDUpdateCount=%d", machineDeployment.Name, reason, metrics.MCDUpdateCounter.Add(1))
 	return nil
 }
 
@@ -492,6 +499,6 @@ func (c *controller) unfreezeMachineDeployment(ctx context.Context, machineDeplo
 		return err
 	}
 
-	klog.V(2).Infof("SafetyController: Unfroze MachineDeployment %q due to %s", machineDeployment.Name, reason)
+	klog.V(2).Infof("SafetyController: Unfroze MachineDeployment %q due to %s, MCDUpdateCount=%d", machineDeployment.Name, reason, metrics.MCDUpdateCounter.Add(1))
 	return nil
 }
