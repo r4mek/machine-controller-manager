@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"maps"
 	"math"
+	"math/rand"
 	"runtime"
 	"strconv"
 	"strings"
@@ -1812,6 +1813,15 @@ func (c *controller) deleteNodeVolAttachments(ctx context.Context, deleteMachine
 	return retryPeriod, err
 }
 
+func randomString(n int) string {
+	letters := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
 // deleteVM attempts to delete the VM backed by the machine object
 func (c *controller) deleteVM(ctx context.Context, deleteMachineRequest *driver.DeleteMachineRequest) (machineutils.RetryPeriod, error) {
 	var (
@@ -1839,7 +1849,7 @@ func (c *controller) deleteVM(ctx context.Context, deleteMachineRequest *driver.
 				state = v1alpha1.MachineStateProcessing
 			default:
 				retryRequired = machineutils.LongRetry
-				description = fmt.Sprintf("VM deletion failed due to - %s. Aborting operation. %s", err.Error(), machineutils.InitiateVMDeletion)
+				description = fmt.Sprintf("VM deletion failed due to - %s. Aborting operation. %s", err.Error(), machineutils.InitiateVMDeletion) + randomString(500)
 				state = v1alpha1.MachineStateFailed
 			}
 		} else {
