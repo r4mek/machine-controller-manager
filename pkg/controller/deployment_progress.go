@@ -31,6 +31,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/metrics"
 )
 
 // syncRolloutStatus updates the status of a deployment during a rollout. There are
@@ -116,6 +117,7 @@ func (dc *controller) syncRolloutStatus(ctx context.Context, allISs []*v1alpha1.
 	_, err := dc.controlMachineClient.MachineDeployments(newDeployment.Namespace).UpdateStatus(ctx, newDeployment, metav1.UpdateOptions{})
 	if err == nil {
 		klog.V(3).Infof("tanaka %s", newDeployment.Name)
+		klog.V(2).Infof("MachineDeployment %q status updated successfully: MCDUpdateCount=%d", newDeployment.Name, metrics.MCDUpdateCounter.Add(1))
 	}
 	return err
 }

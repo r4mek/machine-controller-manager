@@ -29,6 +29,7 @@ import (
 
 	"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 	"github.com/gardener/machine-controller-manager/pkg/util/nodeops"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/metrics"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -139,6 +140,7 @@ func (dc *controller) updateMachineDeploymentAndClearRollbackTo(ctx context.Cont
 	_, err := dc.controlMachineClient.MachineDeployments(d.Namespace).Update(ctx, d, metav1.UpdateOptions{})
 	if err == nil {
 		klog.V(3).Infof("tanaka %s", d.Name)
+		klog.V(2).Infof("MachineDeployment %q updated successfully: MCDUpdateCount=%d", d.Name, metrics.MCDUpdateCounter.Add(1))
 	}
 	return err
 }
@@ -224,6 +226,7 @@ func (dc *controller) removeTaintNodesBackingMachineSet(ctx context.Context, mac
 			}
 		}
 		klog.V(3).Infof("kelly %s", msCopy.Name)
+		klog.V(2).Infof("MachineSet %q updated successfully: MCSUpdateCount=%d", msCopy.Name, metrics.MCSUpdateCounter.Add(1))
 
 		// Break out of loop when update succeeds
 		break

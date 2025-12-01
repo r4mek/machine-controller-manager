@@ -37,6 +37,7 @@ import (
 	v1alpha1listers "github.com/gardener/machine-controller-manager/pkg/client/listers/machine/v1alpha1"
 	labelsutil "github.com/gardener/machine-controller-manager/pkg/util/labels"
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machineutils"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/metrics"
 )
 
 // TODO: use client library instead when it starts to support update retries
@@ -63,6 +64,7 @@ func UpdateISWithRetries(ctx context.Context, isClient v1alpha1client.MachineSet
 		is, err = isClient.Update(ctx, is, metav1.UpdateOptions{})
 		if err == nil {
 			klog.V(3).Infof("kelly %s", is.Name)
+			klog.V(2).Infof("MachineSet %q updated successfully: MCSUpdateCount=%d", is.Name, metrics.MCSUpdateCounter.Add(1))
 		}
 		return err
 	})

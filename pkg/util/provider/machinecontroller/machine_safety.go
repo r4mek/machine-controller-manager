@@ -15,6 +15,7 @@ import (
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/driver"
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/codes"
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machineutils"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/metrics"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -92,6 +93,7 @@ func (c *controller) reconcileClusterMachineSafetyAPIServer(_ string) error {
 						return err
 					}
 					klog.V(3).Infof("sierra %s", machine.Name)
+					klog.V(2).Infof("Machine %q updated successfully: MCUpdateCount=%d", machine.Name, metrics.MCUpdateCounter.Add(1))
 
 					klog.V(2).Infof("SafetyController: Reinitializing machine health check for machine: %q with backing node: %q and providerID: %q", machine.Name, getNodeName(machine), getProviderID(machine))
 				}

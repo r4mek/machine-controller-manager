@@ -5,6 +5,8 @@
 package metrics
 
 import (
+	"sync/atomic"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -13,6 +15,10 @@ const (
 	machineSubsystem  = "machine"
 	cloudAPISubsystem = "cloud_api"
 	miscSubsystem     = "misc"
+)
+
+var (
+	MCUpdateCounter, MCSUpdateCounter, MCDUpdateCounter atomic.Int64
 )
 
 // variables for subsystem: machine

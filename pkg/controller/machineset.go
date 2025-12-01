@@ -49,6 +49,7 @@ import (
 	v1alpha1client "github.com/gardener/machine-controller-manager/pkg/client/clientset/versioned/typed/machine/v1alpha1"
 	v1alpha1listers "github.com/gardener/machine-controller-manager/pkg/client/listers/machine/v1alpha1"
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machineutils"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/metrics"
 )
 
 const (
@@ -815,6 +816,7 @@ func (c *controller) updateMachineSetFinalizers(ctx context.Context, machineSet 
 
 		if err == nil {
 			klog.V(3).Infof("kelly %s", clone.Name)
+			klog.V(2).Infof("MachineSet %q updated successfully: MCSUpdateCount=%d", clone.Name, metrics.MCSUpdateCounter.Add(1))
 			return nil
 		}
 	}
@@ -849,6 +851,7 @@ func (c *controller) updateMachineStatus(
 		return c.updateMachineStatus(ctx, machine, lastOperation, currentStatus)
 	}
 	klog.V(3).Infof("sierra %s", clone.Name)
+	klog.V(2).Infof("Machine %q updated successfully, MCUpdateCount=%d", clone.Name, metrics.MCUpdateCounter.Add(1))
 	return clone, nil
 }
 
@@ -893,6 +896,7 @@ func UpdateMachineWithRetries(ctx context.Context, machineClient v1alpha1client.
 		machine, err = machineClient.Update(ctx, machine, metav1.UpdateOptions{})
 		if err == nil {
 			klog.V(3).Infof("sierra %s", machine.Name)
+			klog.V(2).Infof("Machine %q updated successfully, MCUpdateCount=%d", machine.Name, metrics.MCUpdateCounter.Add(1))
 		}
 		return err
 	})

@@ -16,6 +16,7 @@ import (
 
 	"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/cache"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/metrics"
 
 	"k8s.io/klog/v2"
 )
@@ -111,6 +112,7 @@ func (c *controller) unfreezeMachineDeploymentsWithUnfreezeAnnotation(ctx contex
 						return err
 					}
 					klog.V(3).Infof("kelly %s", clone.Name)
+					klog.V(2).Infof("MachineSet %q updated successfully: MCSUpdateCount=%d", clone.Name, metrics.MCSUpdateCounter.Add(1))
 				}
 			}
 		}
@@ -320,6 +322,7 @@ func (c *controller) freezeMachineSetAndDeployment(ctx context.Context, machineS
 		return err
 	}
 	klog.V(3).Infof("kelly1 %s", clone.Name)
+	klog.V(2).Infof("MachineSet %q updated successfully: MCSUpdateCount=%d", clone.Name, metrics.MCSUpdateCounter.Add(1))
 
 	clone = machineSet.DeepCopy()
 	if clone.Labels == nil {
@@ -332,6 +335,7 @@ func (c *controller) freezeMachineSetAndDeployment(ctx context.Context, machineS
 		return err
 	}
 	klog.V(3).Infof("kelly2 %s", clone.Name)
+	klog.V(2).Infof("MachineSet %q updated successfully: MCSUpdateCount=%d", clone.Name, metrics.MCSUpdateCounter.Add(1))
 
 	machineDeployments := c.getMachineDeploymentsForMachineSet(machineSet)
 	if len(machineDeployments) >= 1 {
@@ -398,6 +402,7 @@ func (c *controller) unfreezeMachineSet(ctx context.Context, machineSet *v1alpha
 		return err
 	}
 	klog.V(3).Infof("kelly %s", clone.Name)
+	klog.V(2).Infof("MachineSet %q updated successfully: MCSUpdateCount=%d", clone.Name, metrics.MCSUpdateCounter.Add(1))
 
 	clone = machineSet.DeepCopy()
 	if clone.Annotations == nil {
@@ -414,6 +419,7 @@ func (c *controller) unfreezeMachineSet(ctx context.Context, machineSet *v1alpha
 		return err
 	}
 	klog.V(3).Infof("kelly %s", clone.Name)
+	klog.V(2).Infof("MachineSet %q updated successfully: MCSUpdateCount=%d", clone.Name, metrics.MCSUpdateCounter.Add(1))
 
 	c.recorder.Eventf(machineSet, corev1.EventTypeNormal, MachineSetUnfreezeEvent, "SafetyController: Unfroze MachineSet %s", machineSet.Name)
 	klog.V(2).Infof("SafetyController: Unfroze MachineSet %q", machineSet.Name)
@@ -440,6 +446,7 @@ func (c *controller) freezeMachineDeployment(ctx context.Context, machineDeploym
 		return err
 	}
 	klog.V(3).Infof("tanaka %s", clone.Name)
+	klog.V(2).Infof("MachineDeployment %q updated successfully: MCDUpdateCount=%d", clone.Name, metrics.MCDUpdateCounter.Add(1))
 
 	clone = machineDeployment.DeepCopy()
 	if clone.Labels == nil {
@@ -452,6 +459,7 @@ func (c *controller) freezeMachineDeployment(ctx context.Context, machineDeploym
 		return err
 	}
 	klog.V(3).Infof("tanaka %s", clone.Name)
+	klog.V(2).Infof("MachineDeployment %q updated successfully: MCDUpdateCount=%d", clone.Name, metrics.MCDUpdateCounter.Add(1))
 
 	klog.V(2).Infof("SafetyController: Froze MachineDeployment %q due to %s", machineDeployment.Name, reason)
 	return nil
@@ -484,6 +492,7 @@ func (c *controller) unfreezeMachineDeployment(ctx context.Context, machineDeplo
 		return err
 	}
 	klog.V(3).Infof("tanaka %s", clone.Name)
+	klog.V(2).Infof("MachineDeployment %q updated successfully: MCDUpdateCount=%d", clone.Name, metrics.MCDUpdateCounter.Add(1))
 
 	clone = machineDeployment.DeepCopy()
 	if clone.Annotations == nil {
@@ -500,6 +509,7 @@ func (c *controller) unfreezeMachineDeployment(ctx context.Context, machineDeplo
 		return err
 	}
 	klog.V(3).Infof("tanaka %s", clone.Name)
+	klog.V(2).Infof("MachineDeployment %q updated successfully: MCDUpdateCount=%d", clone.Name, metrics.MCDUpdateCounter.Add(1))
 
 	klog.V(2).Infof("SafetyController: Unfroze MachineDeployment %q due to %s", machineDeployment.Name, reason)
 	return nil

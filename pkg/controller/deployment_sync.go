@@ -31,6 +31,7 @@ import (
 
 	"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 	labelsutil "github.com/gardener/machine-controller-manager/pkg/util/labels"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/metrics"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,6 +104,7 @@ func (dc *controller) checkPausedConditions(ctx context.Context, d *v1alpha1.Mac
 	_, err := dc.controlMachineClient.MachineDeployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions{})
 	if err == nil {
 		klog.V(3).Infof("tanaka %s", d.Name)
+		klog.V(2).Infof("MachineDeployment %q status updated successfully: MCDUpdateCount=%d", d.Name, metrics.MCDUpdateCounter.Add(1))
 	}
 	return err
 }
@@ -261,6 +263,7 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 			tmp, err := dc.controlMachineClient.MachineSets(isCopy.Namespace).Update(ctx, isCopy, metav1.UpdateOptions{})
 			if err != nil {
 				klog.V(3).Infof("kelly %s", isCopy.Name)
+				klog.V(2).Infof("MachinSet %q updated successfully: MCSUpdateCount=%d", isCopy.Name, metrics.MCSUpdateCounter.Add(1))
 			}
 			return tmp, err
 		}
@@ -282,12 +285,14 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 				return nil, err
 			}
 			klog.V(3).Infof("tanaka %s", d.Name)
+			klog.V(2).Infof("MachineDeployment %q updated successfully: MCDUpdateCount=%d", d.Name, metrics.MCDUpdateCounter.Add(1))
 			dCopy := d.DeepCopy()
 			dCopy.Status = newStatus
 			if _, err = dc.controlMachineClient.MachineDeployments(dCopy.Namespace).UpdateStatus(ctx, dCopy, metav1.UpdateOptions{}); err != nil {
 				return nil, err
 			}
 			klog.V(3).Infof("tanaka %s", dCopy.Name)
+			klog.V(2).Infof("MachineDeployment %q status updated successfully: MCDUpdateCount=%d", dCopy.Name, metrics.MCDUpdateCounter.Add(1))
 		}
 		return isCopy, nil
 	}
@@ -373,6 +378,7 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 		_, dErr := dc.controlMachineClient.MachineDeployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions{})
 		if dErr == nil {
 			klog.V(3).Infof("tanaka %s", d.Name)
+			klog.V(2).Infof("MachineDeployment %q status updated successfully: MCDUpdateCount=%d", d.Name, metrics.MCDUpdateCounter.Add(1))
 			klog.V(2).Infof("Found a hash collision for machine deployment %q - bumping collisionCount (%d->%d) to resolve it", d.Name, preCollisionCount, *d.Status.CollisionCount)
 		}
 		return nil, err
@@ -389,6 +395,7 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 		// these reasons as well. Related issue: https://github.com/kubernetes/kubernetes/issues/18568
 		_, _ = dc.controlMachineClient.MachineDeployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions{})
 		klog.V(3).Infof("tanaka %s", d.Name)
+		klog.V(2).Infof("MachineDeployment %q status updated successfully: MCDUpdateCount=%d", d.Name, metrics.MCDUpdateCounter.Add(1))
 		dc.recorder.Eventf(d, v1.EventTypeWarning, FailedISCreateReason, msg)
 		return nil, err
 	}
@@ -407,6 +414,7 @@ func (dc *controller) getNewMachineSet(ctx context.Context, d *v1alpha1.MachineD
 		_, err = dc.controlMachineClient.MachineDeployments(d.Namespace).UpdateStatus(ctx, d, metav1.UpdateOptions{})
 		if err == nil {
 			klog.V(3).Infof("tanaka %s", d.Name)
+			klog.V(2).Infof("MachineDeployment %q status updated successfully: MCDUpdateCount=%d", d.Name, metrics.MCDUpdateCounter.Add(1))
 		}
 	}
 	return createdIS, err
@@ -568,6 +576,7 @@ func (dc *controller) scaleMachineSet(ctx context.Context, is *v1alpha1.MachineS
 		is, err = dc.controlMachineClient.MachineSets(isCopy.Namespace).Update(ctx, isCopy, metav1.UpdateOptions{})
 		if err == nil && sizeNeedsUpdate {
 			klog.V(3).Infof("kelly0 %s", isCopy.Name)
+			klog.V(2).Infof("MachineSet %q updated successfully: MCSUpdateCount=%d", isCopy.Name, metrics.MCSUpdateCounter.Add(1))
 			scaled = true
 			dc.recorder.Eventf(deployment, v1.EventTypeNormal, "ScalingMachineSet", "Scaled %s machine set %s to %d", scalingOperation, is.Name, newScale)
 		}
@@ -627,6 +636,7 @@ func (dc *controller) syncMachineDeploymentStatus(ctx context.Context, allISs []
 	_, err := dc.controlMachineClient.MachineDeployments(newDeployment.Namespace).UpdateStatus(ctx, newDeployment, metav1.UpdateOptions{})
 	if err == nil {
 		klog.V(3).Infof("tanaka %s", newDeployment.Name)
+		klog.V(2).Infof("MachineDeployment %q status updated successfully: MCDUpdateCount=%d", newDeployment.Name, metrics.MCDUpdateCounter.Add(1))
 	}
 	return err
 }

@@ -31,6 +31,7 @@ import (
 
 	"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 	machineapi "github.com/gardener/machine-controller-manager/pkg/client/clientset/versioned/typed/machine/v1alpha1"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/metrics"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -73,6 +74,7 @@ func updateMachineSetStatus(ctx context.Context, machineClient machineapi.Machin
 
 		if updateErr == nil {
 			klog.V(3).Infof("kellys %s", is.Name)
+			klog.V(2).Infof("MachineSet %q status updated successfully: MCSUpdateCount=%d", is.Name, metrics.MCSUpdateCounter.Add(1))
 			return updatedIS, nil
 		}
 		// Stop retrying if we exceed statusUpdateRetries - the MachineSet will be requeued with a rate limit.

@@ -31,6 +31,7 @@ import (
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/codes"
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machinecodes/status"
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machineutils"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/metrics"
 )
 
 /*
@@ -662,6 +663,7 @@ func (c *controller) triggerCreationFlow(ctx context.Context, createMachineReque
 				return machineutils.ShortRetry, fmt.Errorf("failed to persist status addresses after initialization was successful: %w", err)
 			}
 			klog.V(3).Infof("sierra %s", clone.Name)
+			klog.V(2).Infof("Machine %q updated successfully: MCUpdateCount=%d", clone.Name, metrics.MCUpdateCounter.Add(1))
 		}
 
 		// Return error even when machine object is updated
@@ -700,6 +702,7 @@ func (c *controller) triggerCreationFlow(ctx context.Context, createMachineReque
 			klog.Warningf("Machine/status UPDATE failed for %q. Retrying, error: %s", machine.Name, err)
 		} else {
 			klog.V(3).Infof("sierra %s", clone.Name)
+			klog.V(2).Infof("Machine %q updated successfully: MCUpdateCount=%d", clone.Name, metrics.MCUpdateCounter.Add(1))
 			klog.V(2).Infof("Machine/status UPDATE for %q during creation", machine.Name)
 			// Return error even when machine object is updated
 			err = fmt.Errorf("machine creation in process. Machine/Status UPDATE successful")
@@ -733,6 +736,7 @@ func (c *controller) updateLabels(ctx context.Context, machine *v1alpha1.Machine
 			clone = machine.DeepCopy()
 		} else {
 			klog.V(3).Infof("sierra %s", clone.Name)
+			klog.V(2).Infof("Machine %q updated successfully: MCUpdateCount=%d", clone.Name, metrics.MCUpdateCounter.Add(1))
 			clone = updatedMachine
 			klog.V(2).Infof("Machine labels/annotations UPDATE for %q", clone.Name)
 			err = fmt.Errorf("machine creation in process. Machine labels/annotations update is successful")

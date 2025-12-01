@@ -31,6 +31,7 @@ import (
 	"github.com/gardener/machine-controller-manager/pkg/apis/machine/v1alpha1"
 	"github.com/gardener/machine-controller-manager/pkg/controller/autoscaler"
 	"github.com/gardener/machine-controller-manager/pkg/util/nodeops"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/metrics"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -365,6 +366,7 @@ func (dc *controller) taintNodesBackingMachineSets(ctx context.Context, MachineS
 				return err
 			}
 			klog.V(3).Infof("kelly %s", msCopy.Name)
+			klog.V(2).Infof("MachineSet %q updated successfully: MCSUpdateCount=%d", msCopy.Name, metrics.MCSUpdateCounter.Add(1))
 
 			// Break out of loop when update succeeds
 			break

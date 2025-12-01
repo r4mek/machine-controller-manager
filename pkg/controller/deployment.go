@@ -44,6 +44,7 @@ import (
 	"github.com/gardener/machine-controller-manager/pkg/apis/machine/validation"
 	"github.com/gardener/machine-controller-manager/pkg/util/annotations"
 	"github.com/gardener/machine-controller-manager/pkg/util/provider/machineutils"
+	"github.com/gardener/machine-controller-manager/pkg/util/provider/metrics"
 )
 
 // controllerKind contains the schema.GroupVersionKind for this controller type.
@@ -501,6 +502,7 @@ func (dc *controller) reconcileClusterMachineDeployment(key string) error {
 
 			}
 			klog.V(3).Infof("tanaka %s", d.Name)
+			klog.V(2).Infof("MachineDeployment %q status updated successfully: MCDUpdateCount=%d", d.Name, metrics.MCDUpdateCounter.Add(1))
 		}
 		return nil
 	}
@@ -641,6 +643,7 @@ func (dc *controller) updateMachineDeploymentFinalizers(ctx context.Context, mac
 		dc.updateMachineDeploymentFinalizers(ctx, machineDeployment, finalizers)
 	} else {
 		klog.V(3).Infof("tanaka %s", clone.Name)
+		klog.V(2).Infof("MachineDeployment %q updated successfully: MCDUpdateCount=%d", clone.Name, metrics.MCDUpdateCounter.Add(1))
 	}
 }
 
@@ -678,6 +681,7 @@ func (dc *controller) setMachinePriorityAnnotationAndUpdateTriggeredForDeletion(
 			return err
 		}
 		klog.V(3).Infof("sierra %s", mcAdjust.Name)
+		klog.V(2).Infof("Machine %q updated successfully, MCUpdateCount=%d", machineName, metrics.MCUpdateCounter.Add(1))
 		klog.V(3).Infof("Machine %q of MachineDeployment %q marked with MachinePriority=1 annotation successfully", machineName, mcd.Name)
 	}
 
@@ -700,6 +704,7 @@ func (dc *controller) setMachinePriorityAnnotationAndUpdateTriggeredForDeletion(
 		return err
 	}
 	klog.V(3).Infof("tanaka %s", mcdAdjust.Name)
+	klog.V(2).Infof("MachineDeployment %q updated successfully: MCDUpdateCount=%d", mcdAdjust.Name, metrics.MCDUpdateCounter.Add(1))
 	klog.V(3).Infof("Updated MachineDeployment %q with #%d machine names still pending deletion, triggerDeletionAnnotValue=%q", mcd.Name, len(triggerForDeletionMachineNames), triggerDeletionAnnotValue)
 	return nil
 }
