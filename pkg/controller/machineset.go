@@ -26,7 +26,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gardener/machine-controller-manager/pkg/metrics"
 	"reflect"
 	"sort"
 	"sync"
@@ -815,7 +814,6 @@ func (c *controller) updateMachineSetFinalizers(ctx context.Context, machineSet 
 		_, err = c.controlMachineClient.MachineSets(clone.Namespace).Update(ctx, clone, metav1.UpdateOptions{})
 
 		if err == nil {
-			klog.V(3).Infof("Successfully updated machineSet %q finalizers to %v, MCSUpdateCount=%d", machineSet.Name, finalizers, metrics.MCSUpdateCounter.Add(1))
 			klog.V(3).Infof("kelly %s", clone.Name)
 			return nil
 		}
@@ -894,7 +892,6 @@ func UpdateMachineWithRetries(ctx context.Context, machineClient v1alpha1client.
 		}
 		machine, err = machineClient.Update(ctx, machine, metav1.UpdateOptions{})
 		if err == nil {
-			klog.V(2).Infof("Machine %q updated successfully, MCUpdateCount=%d", machine.Name, metrics.MCUpdateCounter.Add(1))
 			klog.V(3).Infof("sierra %s", machine.Name)
 		}
 		return err

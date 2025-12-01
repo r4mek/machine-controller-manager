@@ -25,7 +25,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/machine-controller-manager/pkg/metrics"
 	"sort"
 	"time"
 
@@ -366,7 +365,6 @@ func (dc *controller) taintNodesBackingMachineSets(ctx context.Context, MachineS
 				return err
 			}
 			klog.V(3).Infof("kelly %s", msCopy.Name)
-			klog.V(2).Infof("Tainted MachineSet object %q with %s to avoid scheduling of pods, MCSUpdateCount=%d", machineSet.Name, taint.Key, metrics.MCSUpdateCounter.Add(1))
 
 			// Break out of loop when update succeeds
 			break

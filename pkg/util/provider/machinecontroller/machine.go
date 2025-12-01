@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/gardener/machine-controller-manager/pkg/metrics"
 	"maps"
 	"slices"
 	"strings"
@@ -662,7 +661,6 @@ func (c *controller) triggerCreationFlow(ctx context.Context, createMachineReque
 			if _, err := c.controlMachineClient.Machines(clone.Namespace).UpdateStatus(ctx, clone, metav1.UpdateOptions{}); err != nil {
 				return machineutils.ShortRetry, fmt.Errorf("failed to persist status addresses after initialization was successful: %w", err)
 			}
-			klog.V(2).Infof("Machine %q initialized successfully, MCUpdateStatus=%d", machine.Name, metrics.MCUpdateCounter.Add(1))
 			klog.V(3).Infof("sierra %s", clone.Name)
 		}
 
@@ -736,7 +734,7 @@ func (c *controller) updateLabels(ctx context.Context, machine *v1alpha1.Machine
 		} else {
 			klog.V(3).Infof("sierra %s", clone.Name)
 			clone = updatedMachine
-			klog.V(2).Infof("Machine labels/annotations UPDATE for %q, MCUpdateCount=%d", clone.Name, metrics.MCUpdateCounter.Add(1))
+			klog.V(2).Infof("Machine labels/annotations UPDATE for %q", clone.Name)
 			err = fmt.Errorf("machine creation in process. Machine labels/annotations update is successful")
 		}
 	}

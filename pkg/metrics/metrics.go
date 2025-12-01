@@ -6,11 +6,6 @@ package metrics
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	"sync/atomic"
-)
-
-var (
-	MCUpdateCounter, MCSUpdateCounter, MCDUpdateCounter atomic.Int64
 )
 
 const (

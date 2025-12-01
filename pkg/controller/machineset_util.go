@@ -25,7 +25,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/gardener/machine-controller-manager/pkg/metrics"
 
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -60,8 +59,6 @@ func UpdateISWithRetries(ctx context.Context, isClient v1alpha1client.MachineSet
 		// Apply the update, then attempt to push it to the apiserver.
 		if applyErr := applyUpdate(is); applyErr != nil {
 			return applyErr
-		} else {
-			klog.V(4).Infof("Machine set %q updated successfully, MCSUpdateCount=%d", name, metrics.MCSUpdateCounter.Add(1))
 		}
 		is, err = isClient.Update(ctx, is, metav1.UpdateOptions{})
 		if err == nil {
